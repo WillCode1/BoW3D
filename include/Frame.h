@@ -7,10 +7,10 @@
 #include <pcl/conversions.h>
 #include <eigen3/Eigen/Dense>
 
+#include "LinK3D_Extractor.h"
+
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
-
-#include "LinK3D_Extractor.h"
 
 using namespace std;
 using namespace Eigen;
@@ -24,7 +24,7 @@ namespace BoW3D
     public:
         Frame();
 
-        Frame(std::shared_ptr<LinK3D_Extractor> pLink3dExtractor, pcl::PointCloud<pcl::PointXYZ>::Ptr pLaserCloudIn);
+        Frame(std::shared_ptr<LinK3D_Extractor> pLink3dExtractor, pcl::PointCloud<PointType>::Ptr pLaserCloudIn);
 
         ~Frame(){};
 

@@ -6,8 +6,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/opencv.hpp>
 
 #include <pcl/registration/ia_ransac.h>
 #include <pcl/registration/icp.h>
@@ -17,6 +15,9 @@
 
 #include "Frame.h"
 #include "LinK3D_Extractor.h"
+
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
 
 using namespace std;
 
@@ -68,18 +69,20 @@ namespace BoW3D
 
         ~BoW3D() {}
 
-        void update(Frame *pCurrentFrame);
+        void update(std::shared_ptr<Frame> pCurrentFrame);
 
-        int loopCorrection(Frame *currentFrame, Frame *matchedFrame, vector<pair<int, int>> &vMatchedIndex, Eigen::Matrix3d &R, Eigen::Vector3d &t);
+        int loopCorrection(std::shared_ptr<Frame> currentFrame, std::shared_ptr<Frame> matchedFrame, vector<pair<int, int>> &vMatchedIndex, Eigen::Matrix3d &R, Eigen::Vector3d &t);
 
-        void retrieve(Frame *pCurrentFrame, int &loopFrameId, Eigen::Matrix3d &loopRelR, Eigen::Vector3d &loopRelt);
+        void retrieve(int &loopFrameId, Eigen::Matrix3d &loopRelR, Eigen::Vector3d &loopRelt);
+
+        void retrieve(std::shared_ptr<Frame> pCurrentFrame, int &loopFrameId, Eigen::Matrix3d &loopRelR, Eigen::Vector3d &loopRelt);
 
     private:
         std::shared_ptr<LinK3D_Extractor> mpLinK3D_Extractor;
 
         std::pair<int, int> N_nw_ofRatio; // Used to compute the ratio in our paper.
 
-        vector<Frame *> mvFrames;
+        vector<std::shared_ptr<Frame>> mvFrames;
 
         float thr;                     // Ratio threshold in our paper.
         int thf;                       // Frequency threshold in our paper.

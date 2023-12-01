@@ -10,9 +10,9 @@
 
 #include <eigen3/Eigen/Dense>
 #include <cv_bridge/cv_bridge.h>
+#include <math.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
-#include <math.h>
 
 using namespace std;
 
@@ -29,6 +29,7 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZSCA,
                                   (float, x, x)(float, y, y)(float, z, z)(float, scan_position, scan_position)(float, curvature, curvature)(float, angle, angle))
 
 typedef vector<vector<PointXYZSCA>> ScanEdgePoints;
+using PointType = pcl::PointXYZINormal;
 
 namespace BoW3D
 {
@@ -55,9 +56,9 @@ namespace BoW3D
             return cloudCurvature[i] < cloudCurvature[j];
         }
 
-        void removeClosedPointCloud(const pcl::PointCloud<pcl::PointXYZ> &cloud_in, pcl::PointCloud<pcl::PointXYZ> &cloud_out);
+        void removeClosedPointCloud(const pcl::PointCloud<PointType> &cloud_in, pcl::PointCloud<PointType> &cloud_out);
 
-        void extractEdgePoint(pcl::PointCloud<pcl::PointXYZ>::Ptr pLaserCloudIn, ScanEdgePoints &edgePoints);
+        void extractEdgePoint(pcl::PointCloud<PointType>::Ptr pLaserCloudIn, ScanEdgePoints &edgePoints);
 
         void divideArea(ScanEdgePoints &scanEdgePoints, ScanEdgePoints &sectorAreaCloud);
 
@@ -88,7 +89,7 @@ namespace BoW3D
                                    vector<pair<int, int>> &vMatched,
                                    vector<pair<PointXYZSCA, PointXYZSCA>> &matchPoints);
 
-        void operator()(pcl::PointCloud<pcl::PointXYZ>::Ptr pLaserCloudIn,
+        void operator()(pcl::PointCloud<PointType>::Ptr pLaserCloudIn,
                         vector<pcl::PointXYZI> &keyPoints,
                         cv::Mat &descriptors,
                         ScanEdgePoints &validCluster);

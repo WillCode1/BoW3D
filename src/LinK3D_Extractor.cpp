@@ -17,9 +17,7 @@ namespace BoW3D
         ptNumTh = ceil(1.5 * scanNumTh);
     }
 
-    void LinK3D_Extractor::removeClosedPointCloud(
-        const pcl::PointCloud<pcl::PointXYZ> &cloud_in,
-        pcl::PointCloud<pcl::PointXYZ> &cloud_out)
+    void LinK3D_Extractor::removeClosedPointCloud(const pcl::PointCloud<PointType> &cloud_in, pcl::PointCloud<PointType> &cloud_out)
     {
         if (&cloud_in != &cloud_out)
         {
@@ -50,14 +48,12 @@ namespace BoW3D
         cloud_out.is_dense = true;
     }
 
-    void LinK3D_Extractor::extractEdgePoint(
-        pcl::PointCloud<pcl::PointXYZ>::Ptr pLaserCloudIn,
-        ScanEdgePoints &edgePoints)
+    void LinK3D_Extractor::extractEdgePoint(pcl::PointCloud<PointType>::Ptr pLaserCloudIn, ScanEdgePoints &edgePoints)
     {
         vector<int> scanStartInd(nScans, 0);
         vector<int> scanEndInd(nScans, 0);
 
-        pcl::PointCloud<pcl::PointXYZ> laserCloudIn;
+        pcl::PointCloud<PointType> laserCloudIn;
         laserCloudIn = *pLaserCloudIn;
         vector<int> indices;
 
@@ -214,19 +210,12 @@ namespace BoW3D
                 int areaID = 0;
                 float angle = scanCloud[i][j].angle;
 
-                if (angle > 0 && angle < 2 * M_PI)
-                {
-                    areaID = std::floor((angle / (2 * M_PI)) * 120);
-                }
-                else if (angle > 2 * M_PI)
-                {
-                    areaID = std::floor(((angle - 2 * M_PI) / (2 * M_PI)) * 120);
-                }
-                else if (angle < 0)
-                {
-                    areaID = std::floor(((angle + 2 * M_PI) / (2 * M_PI)) * 120);
-                }
+                while (angle > 2 * M_PI)
+                    angle -= 2 * M_PI;
+                while (angle < 0)
+                    angle += 2 * M_PI;
 
+                areaID = std::floor((angle / (2 * M_PI)) * 120);
                 sectorAreaCloud[areaID].push_back(scanCloud[i][j]);
             }
         }
@@ -491,8 +480,7 @@ namespace BoW3D
         return f;
     }
 
-    void LinK3D_Extractor::getDescriptors(const vector<pcl::PointXYZI> &keyPoints,
-                                          cv::Mat &descriptors)
+    void LinK3D_Extractor::getDescriptors(const vector<pcl::PointXYZI> &keyPoints, cv::Mat &descriptors)
     {
         if (keyPoints.empty())
         {
@@ -535,7 +523,8 @@ namespace BoW3D
         {
             vector<float> tempRow(distanceTab[i]);
             std::sort(tempRow.begin(), tempRow.end());
-            int Index[3];
+            // int Index[3];
+            int Index[3] = {0};
 
             // Get the closest three keypoints of current keypoint.
             for (int k = 0; k < 3; k++)
@@ -576,13 +565,21 @@ namespace BoW3D
                     float deter = matrixDirect.determinant();
 
                     int areaNum = 0;
-                    double cosAng = (double)mainDirection.dot(otherDirection) / (double)(mainDirection.norm() * otherDirection.norm());
-                    if (abs(cosAng) - 1 > 0)
+                    float angle;
+                    auto nn = mainDirection.norm() * otherDirection.norm();
+                    if (nn > 1e-6)
                     {
-                        continue;
+                        double cosAng = mainDirection.dot(otherDirection) / nn;
+                        angle = acos(cosAng) * 180 / M_PI;
+                        if (abs(cosAng) - 1 > 0)
+                        {
+                            angle = 0;
+                        }
                     }
-
-                    float angle = acos(cosAng) * 180 / M_PI;
+                    else
+                    {
+                        angle = 90;
+                    }
 
                     if (angle < 0 || angle > 180)
                     {
@@ -833,7 +830,7 @@ namespace BoW3D
         }
     }
 
-    void LinK3D_Extractor::operator()(pcl::PointCloud<pcl::PointXYZ>::Ptr pLaserCloudIn, vector<pcl::PointXYZI> &keyPoints, cv::Mat &descriptors, ScanEdgePoints &validCluster)
+    void LinK3D_Extractor::operator()(pcl::PointCloud<PointType>::Ptr pLaserCloudIn, vector<pcl::PointXYZI> &keyPoints, cv::Mat &descriptors, ScanEdgePoints &validCluster)
     {
         ScanEdgePoints edgePoints;
         extractEdgePoint(pLaserCloudIn, edgePoints);

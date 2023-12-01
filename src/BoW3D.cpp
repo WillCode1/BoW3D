@@ -13,7 +13,7 @@ namespace BoW3D
         N_nw_ofRatio = std::make_pair(0, 0);
     }
 
-    void BoW3D::update(Frame *pCurrentFrame)
+    void BoW3D::update(std::shared_ptr<Frame> pCurrentFrame)
     {
         mvFrames.emplace_back(pCurrentFrame);
 
@@ -89,7 +89,13 @@ namespace BoW3D
         }
     }
 
-    void BoW3D::retrieve(Frame *pCurrentFrame, int &loopFrameId, Eigen::Matrix3d &loopRelR, Eigen::Vector3d &loopRelt)
+    void BoW3D::retrieve(int &loopFrameId, Eigen::Matrix3d &loopRelR, Eigen::Vector3d &loopRelt)
+    {
+        std::shared_ptr<Frame> current_frame = mvFrames.back();
+        retrieve(current_frame, loopFrameId, loopRelR, loopRelt);
+    }
+
+    void BoW3D::retrieve(std::shared_ptr<Frame> pCurrentFrame, int &loopFrameId, Eigen::Matrix3d &loopRelR, Eigen::Vector3d &loopRelt)
     {
         int frameId = pCurrentFrame->mnId;
 
@@ -243,7 +249,7 @@ namespace BoW3D
         {
             int loopId = (*it).second;
 
-            Frame *pLoopFrame = mvFrames[loopId];
+            std::shared_ptr<Frame> pLoopFrame = mvFrames[loopId];
             vector<pair<int, int>> vMatchedIndex;
 
             mpLinK3D_Extractor->match(pCurrentFrame->mvAggregationKeypoints, pLoopFrame->mvAggregationKeypoints, pCurrentFrame->mDescriptors, pLoopFrame->mDescriptors, vMatchedIndex);
@@ -266,7 +272,7 @@ namespace BoW3D
         }
     }
 
-    int BoW3D::loopCorrection(Frame *currentFrame, Frame *matchedFrame, vector<pair<int, int>> &vMatchedIndex, Eigen::Matrix3d &R, Eigen::Vector3d &t)
+    int BoW3D::loopCorrection(std::shared_ptr<Frame> currentFrame, std::shared_ptr<Frame> matchedFrame, vector<pair<int, int>> &vMatchedIndex, Eigen::Matrix3d &R, Eigen::Vector3d &t)
     {
         if (vMatchedIndex.size() <= 30)
         {
@@ -281,8 +287,8 @@ namespace BoW3D
         vector<std::pair<PointXYZSCA, PointXYZSCA>> matchedEdgePt;
         mpLinK3D_Extractor->findEdgeKeypointMatch(currentFiltered, matchedFiltered, vMatchedIndex, matchedEdgePt);
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr source(new pcl::PointCloud<pcl::PointXYZ>());
-        pcl::PointCloud<pcl::PointXYZ>::Ptr target(new pcl::PointCloud<pcl::PointXYZ>());
+        pcl::PointCloud<PointType>::Ptr source(new pcl::PointCloud<PointType>());
+        pcl::PointCloud<PointType>::Ptr target(new pcl::PointCloud<PointType>());
 
         pcl::CorrespondencesPtr corrsPtr(new pcl::Correspondences());
 
@@ -290,8 +296,14 @@ namespace BoW3D
         {
             std::pair<PointXYZSCA, PointXYZSCA> matchPoint = matchedEdgePt[i];
 
-            pcl::PointXYZ sourcePt(matchPoint.first.x, matchPoint.first.y, matchPoint.first.z);
-            pcl::PointXYZ targetPt(matchPoint.second.x, matchPoint.second.y, matchPoint.second.z);
+            PointType sourcePt;
+            PointType targetPt;
+            sourcePt.x = matchPoint.first.x;
+            sourcePt.y = matchPoint.first.y;
+            sourcePt.z = matchPoint.first.z;
+            targetPt.x = matchPoint.second.x;
+            targetPt.y = matchPoint.second.y;
+            targetPt.z = matchPoint.second.z;
 
             source->push_back(sourcePt);
             target->push_back(targetPt);
@@ -301,7 +313,7 @@ namespace BoW3D
         }
 
         pcl::Correspondences corrs;
-        pcl::registration::CorrespondenceRejectorSampleConsensus<pcl::PointXYZ> Ransac_based_Rejection;
+        pcl::registration::CorrespondenceRejectorSampleConsensus<PointType> Ransac_based_Rejection;
         Ransac_based_Rejection.setInputSource(source);
         Ransac_based_Rejection.setInputTarget(target);
         double sac_threshold = 0.4;
@@ -335,8 +347,8 @@ namespace BoW3D
         for (int i = 0; i < corrSize; i++)
         {
             pcl::Correspondence corr = corrs[i];
-            pcl::PointXYZ sourcePt = source->points[corr.index_query];
-            pcl::PointXYZ targetPt = target->points[corr.index_match];
+            PointType sourcePt = source->points[corr.index_query];
+            PointType targetPt = target->points[corr.index_match];
 
             Eigen::Vector3d removeCenterPt1 = Eigen::Vector3d(sourcePt.x - center1(0), sourcePt.y - center1(1), sourcePt.z - center1(2));
             Eigen::Vector3d removeCenterPt2 = Eigen::Vector3d(targetPt.x - center2(0), targetPt.y - center2(1), targetPt.z - center2(2));

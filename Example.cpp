@@ -67,10 +67,10 @@ int main(int argc, char **argv)
         lidar_data_path << dataset_folder << std::setfill('0') << std::setw(6) << cloudInd << ".bin";
         vector<float> lidar_data = read_lidar_data(lidar_data_path.str());
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr current_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+        pcl::PointCloud<PointType>::Ptr current_cloud(new pcl::PointCloud<PointType>());
         for (std::size_t i = 0; i < lidar_data.size(); i += 4)
         {
-            pcl::PointXYZ point;
+            PointType point;
             point.x = lidar_data[i];
             point.y = lidar_data[i + 1];
             point.z = lidar_data[i + 2];
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
             current_cloud->push_back(point);
         }
 
-        Frame *pCurrentFrame = new Frame(pLinK3dExtractor, current_cloud);
+        std::shared_ptr<Frame> pCurrentFrame = std::make_shared<Frame>(pLinK3dExtractor, current_cloud);
 
         if (pCurrentFrame->mnId < 2)
         {
