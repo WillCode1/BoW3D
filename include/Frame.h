@@ -12,7 +12,6 @@
 
 #include "LinK3D_Extractor.h"
 
-
 using namespace std;
 using namespace Eigen;
 
@@ -22,26 +21,25 @@ namespace BoW3D
 
     class Frame
     {
-        public:
-            Frame();
-            
-            Frame(LinK3D_Extractor* pLink3dExtractor, pcl::PointCloud<pcl::PointXYZ>::Ptr pLaserCloudIn);
-            
-            ~Frame(){};
-                        
-        public: 
-            static long unsigned int nNextId;
+    public:
+        Frame();
 
-            long unsigned int mnId;
-            
-            LinK3D_Extractor* mpLink3dExtractor;
+        Frame(std::shared_ptr<LinK3D_Extractor> pLink3dExtractor, pcl::PointCloud<pcl::PointXYZ>::Ptr pLaserCloudIn);
 
-            ScanEdgePoints mClusterEdgeKeypoints;
+        ~Frame(){};
 
-            std::vector<pcl::PointXYZI> mvAggregationKeypoints;
-    
-            cv::Mat mDescriptors;                
+    public:
+        static long unsigned int nNextId;
+
+        long unsigned int mnId;
+
+        std::shared_ptr<LinK3D_Extractor> mpLink3dExtractor;
+
+        ScanEdgePoints mClusterEdgeKeypoints;
+
+        std::vector<pcl::PointXYZI> mvAggregationKeypoints;
+
+        cv::Mat mDescriptors;
     };
 
 }
-

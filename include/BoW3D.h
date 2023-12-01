@@ -11,13 +11,12 @@
 
 #include <pcl/registration/ia_ransac.h>
 #include <pcl/registration/icp.h>
-#include <pcl/registration/sample_consensus_prerejective.h> 
+#include <pcl/registration/sample_consensus_prerejective.h>
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
 
 #include "Frame.h"
 #include "LinK3D_Extractor.h"
-
 
 using namespace std;
 
@@ -25,64 +24,65 @@ namespace BoW3D
 {
     class Frame;
     class LinK3D_extractor;
-    
+
     template <typename T>
-    inline void hash_combine(std::size_t &seed, const T &val) 
+    inline void hash_combine(std::size_t &seed, const T &val)
     {
         seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
-    
-    template <typename T> 
-    inline void hash_val(std::size_t &seed, const T &val) 
+
+    template <typename T>
+    inline void hash_val(std::size_t &seed, const T &val)
     {
         hash_combine(seed, val);
     }
 
     template <typename T1, typename T2>
-    inline void hash_val(std::size_t &seed, const T1 &val1, const T2 &val2) 
+    inline void hash_val(std::size_t &seed, const T1 &val1, const T2 &val2)
     {
         hash_combine(seed, val1);
         hash_val(seed, val2);
     }
 
     template <typename T1, typename T2>
-    inline std::size_t hash_val(const T1 &val1, const T2 &val2) 
+    inline std::size_t hash_val(const T1 &val1, const T2 &val2)
     {
         std::size_t seed = 0;
         hash_val(seed, val1, val2);
         return seed;
     }
 
-    struct pair_hash 
+    struct pair_hash
     {
         template <class T1, class T2>
-        std::size_t operator()(const std::pair<T1, T2> &p) const {
+        std::size_t operator()(const std::pair<T1, T2> &p) const
+        {
             return hash_val(p.first, p.second);
         }
     };
-   
-    class BoW3D: public unordered_map<pair<float, int>, unordered_set<pair<int, int>, pair_hash>, pair_hash>  //Dimension value, Dimension ID; Frame ID, Descriptor ID
+
+    class BoW3D : public unordered_map<pair<float, int>, unordered_set<pair<int, int>, pair_hash>, pair_hash> // Dimension value, Dimension ID; Frame ID, Descriptor ID
     {
-        public:
-            BoW3D(LinK3D_Extractor* pLinK3D_Extractor, float thr_, int thf_, int num_add_retrieve_features_);
+    public:
+        BoW3D(std::shared_ptr<LinK3D_Extractor> pLinK3D_Extractor, float thr_, int thf_, int num_add_retrieve_features_);
 
-            ~BoW3D(){}
-            
-            void update(Frame* pCurrentFrame);
+        ~BoW3D() {}
 
-            int loopCorrection(Frame* currentFrame, Frame* matchedFrame, vector<pair<int, int>> &vMatchedIndex, Eigen::Matrix3d &R, Eigen::Vector3d &t);
+        void update(Frame *pCurrentFrame);
 
-            void retrieve(Frame* pCurrentFrame, int &loopFrameId, Eigen::Matrix3d &loopRelR, Eigen::Vector3d &loopRelt);           
+        int loopCorrection(Frame *currentFrame, Frame *matchedFrame, vector<pair<int, int>> &vMatchedIndex, Eigen::Matrix3d &R, Eigen::Vector3d &t);
 
-        private:
-            LinK3D_Extractor* mpLinK3D_Extractor;
+        void retrieve(Frame *pCurrentFrame, int &loopFrameId, Eigen::Matrix3d &loopRelR, Eigen::Vector3d &loopRelt);
 
-            std::pair<int, int> N_nw_ofRatio; //Used to compute the ratio in our paper.          
+    private:
+        std::shared_ptr<LinK3D_Extractor> mpLinK3D_Extractor;
 
-            vector<Frame*> mvFrames;
+        std::pair<int, int> N_nw_ofRatio; // Used to compute the ratio in our paper.
 
-            float thr; //Ratio threshold in our paper.
-            int thf; //Frequency threshold in our paper.
-            int num_add_retrieve_features; //The number of added or retrieved features for each frame.
+        vector<Frame *> mvFrames;
+
+        float thr;                     // Ratio threshold in our paper.
+        int thf;                       // Frequency threshold in our paper.
+        int num_add_retrieve_features; // The number of added or retrieved features for each frame.
     };
 }

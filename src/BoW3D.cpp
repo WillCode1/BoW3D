@@ -3,19 +3,17 @@
 
 using namespace std;
 
-
 namespace BoW3D
 {
-    BoW3D::BoW3D(LinK3D_Extractor* pLinK3D_Extractor, float thr_, int thf_, int num_add_retrieve_features_): 
-            mpLinK3D_Extractor(pLinK3D_Extractor), 
-            thr(thr_), 
-            thf(thf_), 
-            num_add_retrieve_features(num_add_retrieve_features_)
+    BoW3D::BoW3D(std::shared_ptr<LinK3D_Extractor> pLinK3D_Extractor, float thr_, int thf_, int num_add_retrieve_features_) : mpLinK3D_Extractor(pLinK3D_Extractor),
+                                                                                                                              thr(thr_),
+                                                                                                                              thf(thf_),
+                                                                                                                              num_add_retrieve_features(num_add_retrieve_features_)
     {
-       N_nw_ofRatio = std::make_pair(0, 0); 
+        N_nw_ofRatio = std::make_pair(0, 0);
     }
-    
-    void BoW3D::update(Frame* pCurrentFrame)
+
+    void BoW3D::update(Frame *pCurrentFrame)
     {
         mvFrames.emplace_back(pCurrentFrame);
 
@@ -24,23 +22,23 @@ namespace BoW3D
 
         size_t numFeature = descriptors.rows;
 
-        if(numFeature < (size_t)num_add_retrieve_features) 
+        if (numFeature < (size_t)num_add_retrieve_features)
         {
-            for(size_t i = 0; i < numFeature; i++)
+            for (size_t i = 0; i < numFeature; i++)
             {
                 float *p = descriptors.ptr<float>(i);
-                for(size_t j = 0; j < (size_t)descriptors.cols; j++)
+                for (size_t j = 0; j < (size_t)descriptors.cols; j++)
                 {
-                    if(p[j] != 0)
+                    if (p[j] != 0)
                     {
-                        unordered_map<pair<float, int>, unordered_set<pair<int, int>, pair_hash>, pair_hash>::iterator it; 
+                        unordered_map<pair<float, int>, unordered_set<pair<int, int>, pair_hash>, pair_hash>::iterator it;
 
-                        pair<float, int> word= make_pair(p[j], j);
+                        pair<float, int> word = make_pair(p[j], j);
                         it = this->find(word);
 
-                        if(it == this->end())
+                        if (it == this->end())
                         {
-                            unordered_set<pair<int,int>, pair_hash> place;
+                            unordered_set<pair<int, int>, pair_hash> place;
                             place.insert(make_pair(frameId, i));
                             (*this)[word] = place;
 
@@ -52,28 +50,27 @@ namespace BoW3D
                             (*it).second.insert(make_pair(frameId, i));
                             N_nw_ofRatio.second++;
                         }
-
                     }
                 }
             }
         }
         else
         {
-            for(size_t i = 0; i < (size_t)num_add_retrieve_features; i++)
+            for (size_t i = 0; i < (size_t)num_add_retrieve_features; i++)
             {
                 float *p = descriptors.ptr<float>(i);
-                for(size_t j = 0; j < (size_t)descriptors.cols; j++)
+                for (size_t j = 0; j < (size_t)descriptors.cols; j++)
                 {
-                    if(p[j] != 0)
+                    if (p[j] != 0)
                     {
-                        unordered_map<pair<float, int>, unordered_set<pair<int, int>, pair_hash>, pair_hash>::iterator it; 
+                        unordered_map<pair<float, int>, unordered_set<pair<int, int>, pair_hash>, pair_hash>::iterator it;
 
-                        pair<float, int> word= make_pair(p[j], j);
+                        pair<float, int> word = make_pair(p[j], j);
                         it = this->find(word);
 
-                        if(it == this->end())
+                        if (it == this->end())
                         {
-                            unordered_set<pair<int,int>, pair_hash> place;
+                            unordered_set<pair<int, int>, pair_hash> place;
                             place.insert(make_pair(frameId, i));
                             (*this)[word] = place;
 
@@ -91,37 +88,36 @@ namespace BoW3D
             }
         }
     }
-       
 
-    void BoW3D::retrieve(Frame* pCurrentFrame, int &loopFrameId, Eigen::Matrix3d &loopRelR, Eigen::Vector3d &loopRelt)
-    {        
+    void BoW3D::retrieve(Frame *pCurrentFrame, int &loopFrameId, Eigen::Matrix3d &loopRelR, Eigen::Vector3d &loopRelt)
+    {
         int frameId = pCurrentFrame->mnId;
 
-        cv::Mat descriptors = pCurrentFrame->mDescriptors;      
-        size_t rowSize = descriptors.rows;       
-        
-        map<int, int>mScoreFrameID;
+        cv::Mat descriptors = pCurrentFrame->mDescriptors;
+        size_t rowSize = descriptors.rows;
 
-        if(rowSize < (size_t)num_add_retrieve_features) 
+        map<int, int> mScoreFrameID;
+
+        if (rowSize < (size_t)num_add_retrieve_features)
         {
-            for(size_t i = 0; i < rowSize; i++)
+            for (size_t i = 0; i < rowSize; i++)
             {
-                unordered_map<pair<int, int>, int, pair_hash> mPlaceScore;                
-                                
+                unordered_map<pair<int, int>, int, pair_hash> mPlaceScore;
+
                 float *p = descriptors.ptr<float>(i);
 
                 int countValue = 0;
 
-                for(size_t j = 0; j < (size_t)descriptors.cols; j++)
+                for (size_t j = 0; j < (size_t)descriptors.cols; j++)
                 {
                     countValue++;
 
-                    if(p[j] != 0)
-                    {                   
-                        pair<float, int> word = make_pair(p[j], j);  
+                    if (p[j] != 0)
+                    {
+                        pair<float, int> word = make_pair(p[j], j);
                         auto wordPlacesIter = this->find(word);
 
-                        if(wordPlacesIter == this->end())
+                        if (wordPlacesIter == this->end())
                         {
                             continue;
                         }
@@ -129,151 +125,150 @@ namespace BoW3D
                         {
                             double averNumInPlaceSet = N_nw_ofRatio.second / N_nw_ofRatio.first;
                             int curNumOfPlaces = (wordPlacesIter->second).size();
-                            
+
                             double ratio = curNumOfPlaces / averNumInPlaceSet;
 
-                            if(ratio > thr)
+                            if (ratio > thr)
                             {
                                 continue;
                             }
 
-                            for(auto placesIter = (wordPlacesIter->second).begin(); placesIter != (wordPlacesIter->second).end(); placesIter++)
+                            for (auto placesIter = (wordPlacesIter->second).begin(); placesIter != (wordPlacesIter->second).end(); placesIter++)
                             {
-                                //The interval between the loop and the current frame should be at least 300.
-                                if(frameId - (*placesIter).first < 300) 
+                                // The interval between the loop and the current frame should be at least 300.
+                                if (frameId - (*placesIter).first < 300)
                                 {
                                     continue;
                                 }
 
-                                auto placeNumIt = mPlaceScore.find(*placesIter);                    
-                                
-                                if(placeNumIt == mPlaceScore.end())
-                                {                                
+                                auto placeNumIt = mPlaceScore.find(*placesIter);
+
+                                if (placeNumIt == mPlaceScore.end())
+                                {
                                     mPlaceScore[*placesIter] = 1;
                                 }
                                 else
                                 {
-                                    mPlaceScore[*placesIter]++;                                    
-                                }                                                              
-                            }                       
-                        }                            
-                    }                    
+                                    mPlaceScore[*placesIter]++;
+                                }
+                            }
+                        }
+                    }
                 }
 
-                for(auto placeScoreIter = mPlaceScore.begin(); placeScoreIter != mPlaceScore.end(); placeScoreIter++)
+                for (auto placeScoreIter = mPlaceScore.begin(); placeScoreIter != mPlaceScore.end(); placeScoreIter++)
                 {
-                    if((*placeScoreIter).second > thf) 
+                    if ((*placeScoreIter).second > thf)
                     {
-                       mScoreFrameID[(*placeScoreIter).second] = ((*placeScoreIter).first).first;
+                        mScoreFrameID[(*placeScoreIter).second] = ((*placeScoreIter).first).first;
                     }
-                }                                   
-            }                  
+                }
+            }
         }
         else
         {
-            for(size_t i = 0; i < (size_t)num_add_retrieve_features; i++) 
+            for (size_t i = 0; i < (size_t)num_add_retrieve_features; i++)
             {
                 unordered_map<pair<int, int>, int, pair_hash> mPlaceScore;
-                
+
                 float *p = descriptors.ptr<float>(i);
 
                 int countValue = 0;
 
-                for(size_t j = 0; j < (size_t)descriptors.cols; j++)
+                for (size_t j = 0; j < (size_t)descriptors.cols; j++)
                 {
                     countValue++;
 
-                    if(p[j] != 0)
-                    {                   
-                        pair<float, int> word = make_pair(p[j], j);    
+                    if (p[j] != 0)
+                    {
+                        pair<float, int> word = make_pair(p[j], j);
 
                         auto wordPlacesIter = this->find(word);
 
-                        if(wordPlacesIter == this->end())
+                        if (wordPlacesIter == this->end())
                         {
                             continue;
                         }
                         else
                         {
-                            double averNumInPlaceSet = (double) N_nw_ofRatio.second / N_nw_ofRatio.first;
+                            double averNumInPlaceSet = (double)N_nw_ofRatio.second / N_nw_ofRatio.first;
                             int curNumOfPlaces = (wordPlacesIter->second).size();
 
                             double ratio = curNumOfPlaces / averNumInPlaceSet;
 
-                            if(ratio > thr)
+                            if (ratio > thr)
                             {
                                 continue;
                             }
-                            
-                            for(auto placesIter = (wordPlacesIter->second).begin(); placesIter != (wordPlacesIter->second).end(); placesIter++)
+
+                            for (auto placesIter = (wordPlacesIter->second).begin(); placesIter != (wordPlacesIter->second).end(); placesIter++)
                             {
-                                //The interval between the loop and the current frame should be at least 300.
-                                if(frameId - (*placesIter).first < 300) 
+                                // The interval between the loop and the current frame should be at least 300.
+                                if (frameId - (*placesIter).first < 300)
                                 {
                                     continue;
                                 }
 
-                                auto placeNumIt = mPlaceScore.find(*placesIter);                    
-                                
-                                if(placeNumIt == mPlaceScore.end())
-                                {                                
+                                auto placeNumIt = mPlaceScore.find(*placesIter);
+
+                                if (placeNumIt == mPlaceScore.end())
+                                {
                                     mPlaceScore[*placesIter] = 1;
                                 }
                                 else
                                 {
-                                    mPlaceScore[*placesIter]++;                                    
-                                }                                                              
-                            }                       
-                        }                            
+                                    mPlaceScore[*placesIter]++;
+                                }
+                            }
+                        }
                     }
                 }
 
-                for(auto placeScoreIter = mPlaceScore.begin(); placeScoreIter != mPlaceScore.end(); placeScoreIter++)
+                for (auto placeScoreIter = mPlaceScore.begin(); placeScoreIter != mPlaceScore.end(); placeScoreIter++)
                 {
-                    if((*placeScoreIter).second > thf) 
+                    if ((*placeScoreIter).second > thf)
                     {
-                       mScoreFrameID[(*placeScoreIter).second] = ((*placeScoreIter).first).first;
+                        mScoreFrameID[(*placeScoreIter).second] = ((*placeScoreIter).first).first;
                     }
-                }                                   
-            }                           
-        }     
+                }
+            }
+        }
 
-        if(mScoreFrameID.size() == 0)
+        if (mScoreFrameID.size() == 0)
         {
             return;
         }
 
-        for(auto it = mScoreFrameID.rbegin(); it != mScoreFrameID.rend(); it++)
-        {          
+        for (auto it = mScoreFrameID.rbegin(); it != mScoreFrameID.rend(); it++)
+        {
             int loopId = (*it).second;
 
-            Frame* pLoopFrame = mvFrames[loopId];
-            vector<pair<int, int>> vMatchedIndex;  
-            
-            mpLinK3D_Extractor->match(pCurrentFrame->mvAggregationKeypoints, pLoopFrame->mvAggregationKeypoints, pCurrentFrame->mDescriptors, pLoopFrame->mDescriptors, vMatchedIndex);               
+            Frame *pLoopFrame = mvFrames[loopId];
+            vector<pair<int, int>> vMatchedIndex;
+
+            mpLinK3D_Extractor->match(pCurrentFrame->mvAggregationKeypoints, pLoopFrame->mvAggregationKeypoints, pCurrentFrame->mDescriptors, pLoopFrame->mDescriptors, vMatchedIndex);
 
             int returnValue = 0;
             Eigen::Matrix3d loopRelativeR;
             Eigen::Vector3d loopRelativet;
-                                
+
             returnValue = loopCorrection(pCurrentFrame, pLoopFrame, vMatchedIndex, loopRelativeR, loopRelativet);
 
-            //The distance between the loop and the current should less than 3m.                  
-            if(returnValue != -1 && loopRelativet.norm() < 3 && loopRelativet.norm() > 0) 
+            // The distance between the loop and the current should less than 3m.
+            if (returnValue != -1 && loopRelativet.norm() < 3 && loopRelativet.norm() > 0)
             {
                 loopFrameId = (*it).second;
                 loopRelR = loopRelativeR;
-                loopRelt = loopRelativet;                         
-                
+                loopRelt = loopRelativet;
+
                 return;
-            }     
-        } 
+            }
+        }
     }
 
-
-    int BoW3D::loopCorrection(Frame* currentFrame, Frame* matchedFrame, vector<pair<int, int>> &vMatchedIndex, Eigen::Matrix3d &R, Eigen::Vector3d &t)
+    int BoW3D::loopCorrection(Frame *currentFrame, Frame *matchedFrame, vector<pair<int, int>> &vMatchedIndex, Eigen::Matrix3d &R, Eigen::Vector3d &t)
     {
-        if(vMatchedIndex.size() <= 30)
+        if (vMatchedIndex.size() <= 30)
         {
             return -1;
         }
@@ -285,19 +280,19 @@ namespace BoW3D
 
         vector<std::pair<PointXYZSCA, PointXYZSCA>> matchedEdgePt;
         mpLinK3D_Extractor->findEdgeKeypointMatch(currentFiltered, matchedFiltered, vMatchedIndex, matchedEdgePt);
-        
+
         pcl::PointCloud<pcl::PointXYZ>::Ptr source(new pcl::PointCloud<pcl::PointXYZ>());
         pcl::PointCloud<pcl::PointXYZ>::Ptr target(new pcl::PointCloud<pcl::PointXYZ>());
 
-        pcl::CorrespondencesPtr corrsPtr (new pcl::Correspondences()); 
+        pcl::CorrespondencesPtr corrsPtr(new pcl::Correspondences());
 
-        for(int i = 0; i < (int)matchedEdgePt.size(); i++)
+        for (int i = 0; i < (int)matchedEdgePt.size(); i++)
         {
             std::pair<PointXYZSCA, PointXYZSCA> matchPoint = matchedEdgePt[i];
 
-            pcl::PointXYZ sourcePt(matchPoint.first.x, matchPoint.first.y, matchPoint.first.z);            
+            pcl::PointXYZ sourcePt(matchPoint.first.x, matchPoint.first.y, matchPoint.first.z);
             pcl::PointXYZ targetPt(matchPoint.second.x, matchPoint.second.y, matchPoint.second.z);
-            
+
             source->push_back(sourcePt);
             target->push_back(targetPt);
 
@@ -313,31 +308,31 @@ namespace BoW3D
         Ransac_based_Rejection.setInlierThreshold(sac_threshold);
         Ransac_based_Rejection.getRemainingCorrespondences(*corrsPtr, corrs);
 
-        if(corrs.size() <= 100)
+        if (corrs.size() <= 100)
         {
             return -1;
-        }       
-                
+        }
+
         Eigen::Vector3d p1 = Eigen::Vector3d::Zero();
         Eigen::Vector3d p2 = p1;
         int corrSize = (int)corrs.size();
-        for(int i = 0; i < corrSize; i++)
-        {  
-            pcl::Correspondence corr = corrs[i];         
+        for (int i = 0; i < corrSize; i++)
+        {
+            pcl::Correspondence corr = corrs[i];
             p1(0) += source->points[corr.index_query].x;
             p1(1) += source->points[corr.index_query].y;
-            p1(2) += source->points[corr.index_query].z; 
+            p1(2) += source->points[corr.index_query].z;
 
             p2(0) += target->points[corr.index_match].x;
             p2(1) += target->points[corr.index_match].y;
             p2(2) += target->points[corr.index_match].z;
         }
 
-        Eigen::Vector3d center1 = Eigen::Vector3d(p1(0)/corrSize, p1(1)/corrSize, p1(2)/corrSize);
-        Eigen::Vector3d center2 = Eigen::Vector3d(p2(0)/corrSize, p2(1)/corrSize, p2(2)/corrSize);
-       
-        vector<Eigen::Vector3d> vRemoveCenterPt1, vRemoveCenterPt2; 
-        for(int i = 0; i < corrSize; i++)
+        Eigen::Vector3d center1 = Eigen::Vector3d(p1(0) / corrSize, p1(1) / corrSize, p1(2) / corrSize);
+        Eigen::Vector3d center2 = Eigen::Vector3d(p2(0) / corrSize, p2(1) / corrSize, p2(2) / corrSize);
+
+        vector<Eigen::Vector3d> vRemoveCenterPt1, vRemoveCenterPt2;
+        for (int i = 0; i < corrSize; i++)
         {
             pcl::Correspondence corr = corrs[i];
             pcl::PointXYZ sourcePt = source->points[corr.index_query];
@@ -345,26 +340,25 @@ namespace BoW3D
 
             Eigen::Vector3d removeCenterPt1 = Eigen::Vector3d(sourcePt.x - center1(0), sourcePt.y - center1(1), sourcePt.z - center1(2));
             Eigen::Vector3d removeCenterPt2 = Eigen::Vector3d(targetPt.x - center2(0), targetPt.y - center2(1), targetPt.z - center2(2));
-        
+
             vRemoveCenterPt1.emplace_back(removeCenterPt1);
             vRemoveCenterPt2.emplace_back(removeCenterPt2);
         }
 
         Eigen::Matrix3d w = Eigen::Matrix3d::Zero();
 
-        for(int i = 0; i < corrSize; i++)
+        for (int i = 0; i < corrSize; i++)
         {
             w += vRemoveCenterPt1[i] * vRemoveCenterPt2[i].transpose();
-        }      
+        }
 
-        Eigen::JacobiSVD<Eigen::Matrix3d> svd(w, Eigen::ComputeFullU|Eigen::ComputeFullV);
+        Eigen::JacobiSVD<Eigen::Matrix3d> svd(w, Eigen::ComputeFullU | Eigen::ComputeFullV);
         Eigen::Matrix3d U = svd.matrixU();
         Eigen::Matrix3d V = svd.matrixV();
-        
+
         R = V * U.transpose();
         t = center2 - R * center1;
 
         return 1;
     }
-
 }
