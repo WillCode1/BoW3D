@@ -31,6 +31,9 @@ float thr = 3.5;
 int thf = 5;
 int num_add_retrieve_features = 5;
 
+std::shared_ptr<BoW3D::LinK3D_Extractor> pLinK3dExtractor = std::make_shared<BoW3D::LinK3D_Extractor>(nScans, scanPeriod, minimumRange, distanceTh, matchTh);
+std::shared_ptr<BoW3D::BoW3D> pBoW3D = std::make_shared<BoW3D::BoW3D>(pLinK3dExtractor, thr, thf, num_add_retrieve_features);
+
 // #define VEL_TIMESTAMP_TYPE float
 #define VEL_TIMESTAMP_TYPE double
 // #define VEL_TIMESTAMP_FIELD time
@@ -118,53 +121,20 @@ void read_rosbag(const std::string &bagfile, const std::vector<std::string> &top
     bag.close();
 }
 
-void test_rosbag(const std::string &bagfile, const std::vector<std::string> &topics,
-                 std::shared_ptr<BoW3D::LinK3D_Extractor> &linK3dExtractor,
-                 std::shared_ptr<BoW3D::BoW3D> &BoW3D)
+void pcl_callback(const sensor_msgs::PointCloud2::ConstPtr &msg)
 {
-    rosbag::Bag bag;
-    ROS_WARN("test rosbag start.");
+    pcl::PointCloud<velodyne_ros::Point> pl_orig_velo;
+    pcl::PointCloud<PointType>::Ptr current_cloud(new pcl::PointCloud<PointType>());
+    pcl::fromROSMsg(*msg, pl_orig_velo);
+    pcl_convert(pl_orig_velo, *current_cloud);
+    std::shared_ptr<Frame> pCurrentFrame = std::make_shared<Frame>(pLinK3dExtractor, current_cloud);
 
-    try
-    {
-        bag.open(bagfile, rosbag::bagmode::Read);
-    }
-    catch(const std::exception& e)
-    {
-        std::cout << bagfile << '\n';
-        std::cerr << e.what() << '\n';
-    }
-
-    rosbag::View view(bag, rosbag::TopicQuery(topics));
-
-    ROS_INFO("Test rosbag %s...", bagfile.c_str());
-
-    int load_keyframe = 0;
-
-    for (const rosbag::MessageInstance& msg : view)
-    {
-        if (!msg.isType<sensor_msgs::PointCloud2>())
-            continue;
-
-        load_keyframe++;
-
-        sensor_msgs::PointCloud2::ConstPtr cloud = msg.instantiate<sensor_msgs::PointCloud2>();
-        pcl::PointCloud<velodyne_ros::Point> pl_orig_velo;
-        pcl::PointCloud<PointType>::Ptr current_cloud(new pcl::PointCloud<PointType>());
-        pcl::fromROSMsg(*cloud, pl_orig_velo);
-        pcl_convert(pl_orig_velo, *current_cloud);
-        std::shared_ptr<Frame> pCurrentFrame = std::make_shared<Frame>(linK3dExtractor, current_cloud);
-
-        int loopFrameId = -1;
-        Eigen::Matrix3d loopRelR;
-        Eigen::Vector3d loopRelt;
-        BoW3D->retrieve(pCurrentFrame, loopFrameId, loopRelR, loopRelt);
-        if (loopFrameId != -1)
-            ROS_WARN("%d", loopFrameId);
-    }
-    ROS_WARN("test rosbag end! num = %d", load_keyframe);
-
-    bag.close();
+    int loopFrameId = -1;
+    Eigen::Matrix3d loopRelR;
+    Eigen::Vector3d loopRelt;
+    pBoW3D->retrieve(pCurrentFrame, loopFrameId, loopRelR, loopRelt);
+    if (loopFrameId != -1)
+        ROS_WARN("%d", loopFrameId);
 }
 
 int main(int argc, char **argv)
@@ -172,14 +142,16 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "BoW3D");
     ros::NodeHandle nh;
 
-    string bag_path = "/home/will/data/work_data/shanghai_base4.bag";
+    string bag_path;
+    ros::param::param("bag_path", bag_path, std::string("/home/will/data/work_data/qingdao3.bag"));
     std::vector<std::string> topics = {"/drivers/top_lidar_origin"};
 
-    std::shared_ptr<BoW3D::LinK3D_Extractor> pLinK3dExtractor = std::make_shared<BoW3D::LinK3D_Extractor>(nScans, scanPeriod, minimumRange, distanceTh, matchTh);
-    std::shared_ptr<BoW3D::BoW3D> pBoW3D = std::make_shared<BoW3D::BoW3D>(pLinK3dExtractor, thr, thf, num_add_retrieve_features);
-
     read_rosbag(bag_path, topics, pLinK3dExtractor, pBoW3D);
-    test_rosbag(bag_path, topics, pLinK3dExtractor, pBoW3D);
+
+    ros::Subscriber sub_pcl = nh.subscribe(topics[0], 200000, pcl_callback);
+    // test_rosbag(bag_path, topics, pLinK3dExtractor, pBoW3D);
+
+    ros::spin();
 
     return 0;
 }

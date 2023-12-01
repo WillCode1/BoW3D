@@ -1,0 +1,14 @@
+<launch>
+<!-- Launch file for Mapping -->
+
+	<arg name="rviz" default="true" />
+
+	<param name="bag_path" type="string" value="/home/will/data/work_data/qingdao3.bag" />
+	<!-- <param name="bag_path" type="string" value="/home/will/data/work_data/shanghai_base4.bag" /> -->
+    <node pkg="BoW3D" type="test_demo" name="BoW3D" output="screen" /> 
+
+	<group if="$(arg rviz)">
+		<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find BoW3D)/launch/loop.rviz" />
+	</group>
+
+</launch>
