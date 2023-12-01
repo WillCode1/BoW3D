@@ -38,4 +38,5 @@ catkin_package(
 add_executable(test_KITTI src/Frame.cpp src/LinK3D_Extractor.cpp src/BoW3D.cpp test_KITTI.cpp)
 add_executable(test_demo src/Frame.cpp src/LinK3D_Extractor.cpp src/BoW3D.cpp test_demo.cpp)
 
-target_link_libraries(bow3d ${catkin_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${G2O_LIBS} ${Sophus_LIBRARIES})
+target_link_libraries(test_KITTI ${catkin_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${G2O_LIBS} ${Sophus_LIBRARIES})
+target_link_libraries(test_demo ${catkin_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${G2O_LIBS} ${Sophus_LIBRARIES})
