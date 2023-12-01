@@ -100,7 +100,7 @@ void read_rosbag(const std::string &bagfile, const std::vector<std::string> &top
 
         cnt++;
 
-        if (cnt % 100 == 0)
+        if (cnt % 10 != 0)
             continue;
 
         load_keyframe++;
