@@ -274,7 +274,8 @@ namespace BoW3D
 
     int BoW3D::loopCorrection(std::shared_ptr<Frame> currentFrame, std::shared_ptr<Frame> matchedFrame, vector<pair<int, int>> &vMatchedIndex, Eigen::Matrix3d &R, Eigen::Vector3d &t)
     {
-        if (vMatchedIndex.size() <= 30)
+        // if (vMatchedIndex.size() <= 30)
+        if (vMatchedIndex.size() <= 10)
         {
             return -1;
         }
@@ -320,7 +321,8 @@ namespace BoW3D
         Ransac_based_Rejection.setInlierThreshold(sac_threshold);
         Ransac_based_Rejection.getRemainingCorrespondences(*corrsPtr, corrs);
 
-        if (corrs.size() <= 100)
+        // if (corrs.size() <= 100)
+        if (corrs.size() <= 50)
         {
             return -1;
         }

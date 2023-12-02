@@ -121,6 +121,8 @@ void read_rosbag(const std::string &bagfile, const std::vector<std::string> &top
     bag.close();
 }
 
+#define TEST_ONE_BAG
+
 void pcl_callback(const sensor_msgs::PointCloud2::ConstPtr &msg)
 {
     pcl::PointCloud<velodyne_ros::Point> pl_orig_velo;
@@ -132,7 +134,16 @@ void pcl_callback(const sensor_msgs::PointCloud2::ConstPtr &msg)
     int loopFrameId = -1;
     Eigen::Matrix3d loopRelR;
     Eigen::Vector3d loopRelt;
+
+#ifdef TEST_ONE_BAG
     pBoW3D->retrieve(pCurrentFrame, loopFrameId, loopRelR, loopRelt);
+#else
+    if (pCurrentFrame->mnId > 2)
+        pBoW3D->retrieve(pCurrentFrame, loopFrameId, loopRelR, loopRelt);
+#endif
+
+    pBoW3D->update(pCurrentFrame);
+
     if (loopFrameId != -1)
         ROS_WARN("%d", loopFrameId);
 }
@@ -146,7 +157,9 @@ int main(int argc, char **argv)
     ros::param::param("bag_path", bag_path, std::string("/home/will/data/work_data/qingdao3.bag"));
     std::vector<std::string> topics = {"/drivers/top_lidar_origin"};
 
+#ifndef TEST_ONE_BAG
     read_rosbag(bag_path, topics, pLinK3dExtractor, pBoW3D);
+#endif
 
     ros::Subscriber sub_pcl = nh.subscribe(topics[0], 200000, pcl_callback);
     // test_rosbag(bag_path, topics, pLinK3dExtractor, pBoW3D);
