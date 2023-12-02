@@ -327,6 +327,7 @@ namespace BoW3D
             return -1;
         }
 
+        // solve icp by SVD
         Eigen::Vector3d p1 = Eigen::Vector3d::Zero();
         Eigen::Vector3d p2 = p1;
         int corrSize = (int)corrs.size();
